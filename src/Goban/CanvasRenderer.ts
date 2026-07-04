@@ -147,6 +147,7 @@ export class GobanCanvas extends Goban implements GobanCanvasInterface {
         "white": "Plain",
         "removal-graphic": "x",
         "removal-scale": 1.0,
+        "stone-scale": 1.0,
         "stone-shadows": "default",
     };
     private theme_black!: GobanTheme;
@@ -3793,7 +3794,11 @@ export class GobanCanvas extends Goban implements GobanCanvasInterface {
             r = Math.min(r, (this.square_size - 1) / 2);
         }
 
-        return Math.max(1, r);
+        return Math.max(1, r * this.getStoneScale());
+    }
+
+    private getStoneScale(): number {
+        return Math.min(this.themes["stone-scale"], 1.0);
     }
 
     move_tree_drawStone(

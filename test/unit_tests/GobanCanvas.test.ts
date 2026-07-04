@@ -95,13 +95,18 @@ function basicScorableBoardConfig(
     };
 }
 
-function selectedThemes(board: "Custom" | "Kaya", grid9Url: string = ""): GobanSelectedThemes {
+function selectedThemes(
+    board: "Custom" | "Kaya",
+    grid9Url: string = "",
+    stoneScale: number = 1.0,
+): GobanSelectedThemes {
     return {
         "white": "Shell",
         "black": "Slate",
         "board": board,
         "removal-graphic": "square",
         "removal-scale": 1.0,
+        "stone-scale": stoneScale,
         "stone-shadows": "none",
         "custom-board-grid-backgrounds": {
             "9": grid9Url,
@@ -110,6 +115,54 @@ function selectedThemes(board: "Custom" | "Kaya", grid9Url: string = ""): GobanS
         },
     };
 }
+
+describe("stone scale", () => {
+    beforeEach(() => {
+        board_div = document.createElement("div");
+        document.body.appendChild(board_div);
+    });
+
+    afterEach(() => {
+        delete callbacks.getSelectedThemes;
+        board_div.remove();
+    });
+
+    test("preserves the existing default radius", () => {
+        callbacks.getSelectedThemes = () => selectedThemes("Kaya");
+        const goban = new GobanCanvas(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(4.5);
+
+        goban.destroy();
+    });
+
+    test("caps scale above one", () => {
+        callbacks.getSelectedThemes = () => selectedThemes("Kaya", "", 1.5);
+        const goban = new GobanCanvas(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(4.5);
+
+        goban.destroy();
+    });
+
+    test("shrinks radius below one", () => {
+        callbacks.getSelectedThemes = () => selectedThemes("Kaya", "", 0.5);
+        const goban = new GobanCanvas(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(2.25);
+
+        goban.destroy();
+    });
+});
 
 describe("onTap", () => {
     beforeEach(async () => {
