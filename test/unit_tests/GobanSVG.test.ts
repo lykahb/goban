@@ -108,6 +108,12 @@ function selectedThemes(stoneScale: number = 1.0): GobanSelectedThemes {
     };
 }
 
+function selectedThemesWithoutStoneScale(): GobanSelectedThemes {
+    const themes: Partial<GobanSelectedThemes> = selectedThemes();
+    delete themes["stone-scale"];
+    return themes as GobanSelectedThemes;
+}
+
 describe("stone scale", () => {
     beforeEach(() => {
         board_div = document.createElement("div");
@@ -122,6 +128,18 @@ describe("stone scale", () => {
 
     test("uses half the square size by default", () => {
         callbacks.getSelectedThemes = () => selectedThemes();
+        const goban = new SVGRenderer(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(5);
+
+        goban.destroy();
+    });
+
+    test("defaults missing runtime stone scale to one", () => {
+        callbacks.getSelectedThemes = () => selectedThemesWithoutStoneScale();
         const goban = new SVGRenderer(basic3x3Config());
         const radius = (
             goban as unknown as { computeThemeStoneRadius(): number }

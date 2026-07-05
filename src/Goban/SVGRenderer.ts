@@ -4029,7 +4029,8 @@ export class SVGRenderer extends Goban implements GobanSVGInterface {
     }
 
     private getStoneScale(): number {
-        return this.themes["stone-scale"];
+        const stone_scale = this.themes["stone-scale"];
+        return Number.isFinite(stone_scale) ? stone_scale : 1.0;
     }
 
     public redraw(force_clear?: boolean): void {

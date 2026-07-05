@@ -116,6 +116,12 @@ function selectedThemes(
     };
 }
 
+function selectedThemesWithoutStoneScale(): GobanSelectedThemes {
+    const themes: Partial<GobanSelectedThemes> = selectedThemes("Kaya");
+    delete themes["stone-scale"];
+    return themes as GobanSelectedThemes;
+}
+
 describe("stone scale", () => {
     beforeEach(() => {
         board_div = document.createElement("div");
@@ -129,6 +135,18 @@ describe("stone scale", () => {
 
     test("preserves the existing default radius", () => {
         callbacks.getSelectedThemes = () => selectedThemes("Kaya");
+        const goban = new GobanCanvas(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(4.5);
+
+        goban.destroy();
+    });
+
+    test("defaults missing runtime stone scale to one", () => {
+        callbacks.getSelectedThemes = () => selectedThemesWithoutStoneScale();
         const goban = new GobanCanvas(basic3x3Config());
         const radius = (
             goban as unknown as { computeThemeStoneRadius(): number }

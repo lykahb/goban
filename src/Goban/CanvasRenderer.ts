@@ -3798,7 +3798,8 @@ export class GobanCanvas extends Goban implements GobanCanvasInterface {
     }
 
     private getStoneScale(): number {
-        return Math.min(this.themes["stone-scale"], 1.0);
+        const stone_scale = this.themes["stone-scale"];
+        return Math.min(Number.isFinite(stone_scale) ? stone_scale : 1.0, 1.0);
     }
 
     move_tree_drawStone(
