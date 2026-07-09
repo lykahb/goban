@@ -314,6 +314,13 @@ export interface ServerToClient {
         voters: Vote[];
     }) => void;
 
+    /** All currently-open incident reports have been sent following
+     *  (re)connect, so the client's report list is now in sync. */
+    "incident-report-sync-complete": (data: {
+        /** Number of open reports sent in the initial batch */
+        count: number;
+    }) => void;
+
     /** A private message was received */
     "private-message": (data: {
         /** Who sent the message */
