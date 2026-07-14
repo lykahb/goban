@@ -65,6 +65,7 @@ Goban.setCallbacks({
         //black: "Custom",
         "removal-graphic": "square",
         "removal-scale": 1.0,
+        "stone-scale": 1.0,
     }),
 
     customWhiteStoneUrl: () => {

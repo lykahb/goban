@@ -7,6 +7,7 @@
 (global as any).CLIENT = true;
 
 import { SVGRenderer, SVGRendererGobanConfig } from "../../src/Goban/SVGRenderer";
+import type { GobanSelectedThemes } from "../../src/Goban/Goban";
 import {
     SCORE_ESTIMATION_TOLERANCE,
     SCORE_ESTIMATION_TRIALS,
@@ -94,6 +95,86 @@ function basicScorableBoardConfig(
         ...(additionalOptions ?? {}),
     };
 }
+
+function selectedThemes(stoneScale: number = 1.0): GobanSelectedThemes {
+    return {
+        "white": "Shell",
+        "black": "Slate",
+        "board": "Kaya",
+        "removal-graphic": "square",
+        "removal-scale": 1.0,
+        "stone-scale": stoneScale,
+        "stone-shadows": "none",
+    };
+}
+
+function selectedThemesWithoutStoneScale(): GobanSelectedThemes {
+    const themes: Partial<GobanSelectedThemes> = selectedThemes();
+    delete themes["stone-scale"];
+    return themes as GobanSelectedThemes;
+}
+
+describe("stone scale", () => {
+    beforeEach(() => {
+        board_div = document.createElement("div");
+        document.body.appendChild(board_div);
+    });
+
+    afterEach(() => {
+        delete callbacks.getSelectedThemes;
+        delete callbacks.getFuzzyPlacementEnabled;
+        board_div.remove();
+    });
+
+    test("uses half the square size by default", () => {
+        callbacks.getSelectedThemes = () => selectedThemes();
+        const goban = new SVGRenderer(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(5);
+
+        goban.destroy();
+    });
+
+    test("defaults missing runtime stone scale to one", () => {
+        callbacks.getSelectedThemes = () => selectedThemesWithoutStoneScale();
+        const goban = new SVGRenderer(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(5);
+
+        goban.destroy();
+    });
+
+    test("keeps the fuzzy placement size reduction", () => {
+        callbacks.getSelectedThemes = () => selectedThemes();
+        callbacks.getFuzzyPlacementEnabled = () => true;
+        const goban = new SVGRenderer(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(4.9);
+
+        goban.destroy();
+    });
+
+    test("allows scale above one", () => {
+        callbacks.getSelectedThemes = () => selectedThemes(1.5);
+        const goban = new SVGRenderer(basic3x3Config());
+        const radius = (
+            goban as unknown as { computeThemeStoneRadius(): number }
+        ).computeThemeStoneRadius();
+
+        expect(radius).toBeCloseTo(7.5);
+
+        goban.destroy();
+    });
+});
 
 describe("onTap", () => {
     beforeEach(async () => {

@@ -171,6 +171,7 @@ export class SVGRenderer extends Goban implements GobanSVGInterface {
         "white": "Plain",
         "removal-graphic": "x",
         "removal-scale": 1.0,
+        "stone-scale": 1.0,
         "stone-shadows": "default",
     };
     public theme_black!: GobanTheme;
@@ -4024,7 +4025,12 @@ export class SVGRenderer extends Goban implements GobanSVGInterface {
 
     protected computeThemeStoneRadius(): number {
         const scale = this.getFuzzyPlacementEnabled() ? 0.49 : 0.5;
-        return Math.max(1, this.square_size * scale);
+        return Math.max(1, this.square_size * scale * this.getStoneScale());
+    }
+
+    private getStoneScale(): number {
+        const stone_scale = this.themes["stone-scale"];
+        return Number.isFinite(stone_scale) ? stone_scale : 1.0;
     }
 
     public redraw(force_clear?: boolean): void {
