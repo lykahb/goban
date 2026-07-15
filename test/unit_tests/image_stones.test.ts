@@ -100,4 +100,20 @@ describe("custom image stones", () => {
         expect(theme.getStone(4, 7, stones, first_goban)).toBe("one");
         expect(theme.getStone(4, 7, stones, second_goban)).toBe("four");
     });
+
+    test("reinitializes the random arrangement when a goban changes board size", () => {
+        jest.spyOn(Math, "random").mockReturnValue(0.1);
+        const theme = new THEMES.black.Custom();
+        const stones = ["one", "two"];
+        const goban = { engine: { width: 2, height: 2 } } as unknown as GobanBase;
+
+        expect(theme.getStone(1, 1, stones, goban)).toBe("one");
+
+        (goban as unknown as { engine: { width: number; height: number } }).engine = {
+            width: 3,
+            height: 3,
+        };
+
+        expect(theme.getStone(2, 2, stones, goban)).toBe("one");
+    });
 });

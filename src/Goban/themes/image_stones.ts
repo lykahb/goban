@@ -50,19 +50,26 @@ type StoneType = {
 type StoneTypeArray = Array<StoneType>;
 
 type CustomStoneRandomValues = number[][];
+type CustomStoneRandomValuesKey = GobanBase["engine"];
 
-const custom_stone_random_values = new WeakMap<GobanBase, CustomStoneRandomValues>();
+const custom_stone_random_values = new WeakMap<
+    CustomStoneRandomValuesKey,
+    CustomStoneRandomValues
+>();
 
-function initializeCustomStoneRandomValues(goban: GobanBase): CustomStoneRandomValues {
-    const values = Array.from({ length: goban.engine.height }, () =>
-        Array.from({ length: goban.engine.width }, () => Math.random()),
+function initializeCustomStoneRandomValues(
+    engine: CustomStoneRandomValuesKey,
+): CustomStoneRandomValues {
+    const values = Array.from({ length: engine.height }, () =>
+        Array.from({ length: engine.width }, () => Math.random()),
     );
-    custom_stone_random_values.set(goban, values);
+    custom_stone_random_values.set(engine, values);
     return values;
 }
 
 function customStoneRandomValuesFor(goban: GobanBase): CustomStoneRandomValues {
-    return custom_stone_random_values.get(goban) ?? initializeCustomStoneRandomValues(goban);
+    const engine = goban.engine;
+    return custom_stone_random_values.get(engine) ?? initializeCustomStoneRandomValues(engine);
 }
 
 function normalizeCustomStoneUrls(urls: string[]): string[] {
