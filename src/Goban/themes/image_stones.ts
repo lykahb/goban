@@ -23,6 +23,7 @@ import { renderShadow } from "./rendered_stones";
 import { renderPlainStone } from "./plain_stones";
 import { callbacks } from "../callbacks";
 import { raw_anime_black_svg, raw_anime_white_svg } from "./raw_image_stone_data";
+import type { GobanBase } from "../../GobanBase";
 
 const anime_black_imagedata = makeSvgImageData(raw_anime_black_svg);
 const anime_white_imagedata = makeSvgImageData(raw_anime_white_svg);
@@ -47,6 +48,30 @@ type StoneType = {
     image_loaded: boolean;
 };
 type StoneTypeArray = Array<StoneType>;
+
+type CustomStoneRandomValues = number[][];
+
+const custom_stone_random_values = new WeakMap<GobanBase, CustomStoneRandomValues>();
+
+function initializeCustomStoneRandomValues(goban: GobanBase): CustomStoneRandomValues {
+    const values = Array.from({ length: goban.engine.height }, () =>
+        Array.from({ length: goban.engine.width }, () => Math.random()),
+    );
+    custom_stone_random_values.set(goban, values);
+    return values;
+}
+
+function customStoneRandomValuesFor(goban: GobanBase): CustomStoneRandomValues {
+    return custom_stone_random_values.get(goban) ?? initializeCustomStoneRandomValues(goban);
+}
+
+function normalizeCustomStoneUrls(urls: string[]): string[] {
+    return Array.from(new Set(urls.map((url) => url.trim()).filter((url) => url.length > 0)));
+}
+
+function getCustomStoneUrls(callback: (() => string[]) | undefined): string[] {
+    return normalizeCustomStoneUrls(callback?.() ?? []);
+}
 
 function square_size(radius: number, scaled: boolean): number {
     return 2 * Math.floor(radius) + (scaled ? 0 : 1);
@@ -316,6 +341,14 @@ export default function (THEMES: ThemesInterface) {
             return "Custom";
         }
 
+        override getStone(x: number, y: number, stones: unknown, goban: GobanBase): unknown {
+            if (!Array.isArray(stones) || stones.length <= 1) {
+                return super.getStone(x, y, stones, goban);
+            }
+            const random_value = customStoneRandomValuesFor(goban)[y][x];
+            return stones[Math.floor(random_value * stones.length)];
+        }
+
         override placeBlackStone(
             ctx: CanvasRenderingContext2D,
             shadow_ctx: CanvasRenderingContext2D | null,
@@ -324,11 +357,7 @@ export default function (THEMES: ThemesInterface) {
             cy: number,
             radius: number,
         ): void {
-            if (
-                callbacks.customBlackStoneUrl &&
-                callbacks.customBlackStoneUrl() !== "" &&
-                imageStoneIsReady(stone)
-            ) {
+            if (imageStoneIsReady(stone)) {
                 placeRenderedImageStone(ctx, shadow_ctx, stone, cx, cy, radius);
             } else {
                 renderPlainStone(
@@ -347,12 +376,13 @@ export default function (THEMES: ThemesInterface) {
             _seed: number,
             deferredRenderCallback: () => void,
         ): StoneTypeArray | boolean {
-            if (!callbacks.customBlackStoneUrl || callbacks.customBlackStoneUrl() === "") {
+            const [url] = getCustomStoneUrls(callbacks.customBlackStoneUrls);
+            if (!url) {
                 return true;
             }
             return preRenderImageStone(
                 radius,
-                callbacks.customBlackStoneUrl ? callbacks.customBlackStoneUrl() : "",
+                url,
                 deferredRenderCallback,
                 false /* show_shadow */,
             );
@@ -375,11 +405,7 @@ export default function (THEMES: ThemesInterface) {
             cy: number,
             radius: number,
         ): void {
-            if (
-                callbacks.customWhiteStoneUrl &&
-                callbacks.customWhiteStoneUrl() !== "" &&
-                imageStoneIsReady(stone)
-            ) {
+            if (imageStoneIsReady(stone)) {
                 placeRenderedImageStone(ctx, shadow_ctx, stone, cx, cy, radius);
             } else {
                 renderPlainStone(
@@ -398,12 +424,13 @@ export default function (THEMES: ThemesInterface) {
             _seed: number,
             deferredRenderCallback: () => void,
         ): StoneTypeArray | boolean {
-            if (!callbacks.customWhiteStoneUrl || callbacks.customWhiteStoneUrl() === "") {
+            const [url] = getCustomStoneUrls(callbacks.customWhiteStoneUrls);
+            if (!url) {
                 return true;
             }
             return preRenderImageStone(
                 radius,
-                callbacks.customWhiteStoneUrl ? callbacks.customWhiteStoneUrl() : "",
+                url,
                 deferredRenderCallback,
                 false /* show_shadow */,
             );
@@ -424,22 +451,16 @@ export default function (THEMES: ThemesInterface) {
             _seed: number,
             deferredRenderCallback: () => void,
         ): string[] {
-            if (!callbacks.customBlackStoneUrl || callbacks.customBlackStoneUrl() === "") {
+            const urls = getCustomStoneUrls(callbacks.customBlackStoneUrls);
+            if (urls.length === 0) {
                 return super.preRenderBlackSVG(defs, radius, _seed, deferredRenderCallback);
             }
 
-            const id = this.def_uid(`custom-black-${radius}`);
-            defs.append(
-                this.renderSVG(
-                    {
-                        id,
-                        url: callbacks.customBlackStoneUrl(),
-                    },
-                    radius,
-                ),
-            );
-
-            return [id];
+            return urls.map((url, index) => {
+                const id = this.def_uid(`custom-black-${index}-${radius}`);
+                defs.append(this.createCustomStoneSVG(id, url, radius, this.getBlackStoneColor()));
+                return id;
+            });
         }
 
         public override preRenderWhiteSVG(
@@ -448,22 +469,45 @@ export default function (THEMES: ThemesInterface) {
             _seed: number,
             deferredRenderCallback: () => void,
         ): string[] {
-            if (!callbacks.customWhiteStoneUrl || callbacks.customWhiteStoneUrl() === "") {
+            const urls = getCustomStoneUrls(callbacks.customWhiteStoneUrls);
+            if (urls.length === 0) {
                 return super.preRenderWhiteSVG(defs, radius, _seed, deferredRenderCallback);
             }
 
-            const id = this.def_uid(`custom-white-${radius}`);
-            defs.append(
-                this.renderSVG(
-                    {
-                        id,
-                        url: callbacks.customWhiteStoneUrl(),
-                    },
-                    radius,
-                ),
-            );
+            return urls.map((url, index) => {
+                const id = this.def_uid(`custom-white-${index}-${radius}`);
+                defs.append(this.createCustomStoneSVG(id, url, radius, this.getWhiteStoneColor()));
+                return id;
+            });
+        }
 
-            return [id];
+        private createCustomStoneSVG(
+            id: string,
+            url: string,
+            radius: number,
+            fallback_color: string,
+        ): SVGGraphicsElement {
+            const stone = this.renderSVG({ id, url }, radius);
+            const image = stone.querySelector("image");
+            image?.addEventListener(
+                "error",
+                () => {
+                    const fallback = this.renderSVG(
+                        {
+                            id: `${id}-fallback`,
+                            fill: fallback_color,
+                            stroke: fallback_color,
+                        },
+                        radius,
+                    );
+                    stone.replaceChildren();
+                    while (fallback.firstChild) {
+                        stone.appendChild(fallback.firstChild);
+                    }
+                },
+                { once: true },
+            );
+            return stone;
         }
     }
 
