@@ -467,7 +467,7 @@ export default function (THEMES: ThemesInterface) {
 
             return urls.map((url, index) => {
                 const id = this.def_uid(`custom-black-${index}-${radius}`);
-                defs.append(this.createCustomStoneSVG(id, url, radius, this.getBlackStoneColor()));
+                defs.append(this.renderSVG({ id, url }, radius));
                 return id;
             });
         }
@@ -485,38 +485,9 @@ export default function (THEMES: ThemesInterface) {
 
             return urls.map((url, index) => {
                 const id = this.def_uid(`custom-white-${index}-${radius}`);
-                defs.append(this.createCustomStoneSVG(id, url, radius, this.getWhiteStoneColor()));
+                defs.append(this.renderSVG({ id, url }, radius));
                 return id;
             });
-        }
-
-        private createCustomStoneSVG(
-            id: string,
-            url: string,
-            radius: number,
-            fallback_color: string,
-        ): SVGGraphicsElement {
-            const stone = this.renderSVG({ id, url }, radius);
-            const image = stone.querySelector("image");
-            image?.addEventListener(
-                "error",
-                () => {
-                    const fallback = this.renderSVG(
-                        {
-                            id: `${id}-fallback`,
-                            fill: fallback_color,
-                            stroke: fallback_color,
-                        },
-                        radius,
-                    );
-                    stone.replaceChildren();
-                    while (fallback.firstChild) {
-                        stone.appendChild(fallback.firstChild);
-                    }
-                },
-                { once: true },
-            );
-            return stone;
         }
     }
 

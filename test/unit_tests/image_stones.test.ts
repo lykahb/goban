@@ -75,19 +75,6 @@ describe("custom image stones", () => {
         ).toBe("white.png");
     });
 
-    test("replaces a failed SVG image with a solid stone", () => {
-        callbacks.customBlackStoneUrls = () => ["broken.png"];
-        callbacks.customBlackStoneColor = () => "#123456";
-        const theme = new THEMES.black.Custom();
-        const defs = makeDefs();
-        theme.preRenderBlackSVG(defs, 10, 1, () => undefined);
-
-        defs.querySelector("image")?.dispatchEvent(new Event("error"));
-
-        expect(defs.querySelector("image")).toBeNull();
-        expect(defs.querySelector("circle")?.getAttribute("fill")).toBe("#123456");
-    });
-
     test("falls back when no custom URL and the cached stone is missing", () => {
         callbacks.customBlackStoneUrls = () => [];
         const theme = new THEMES.black.Custom();
