@@ -47,7 +47,9 @@ export interface GobanCallbacks {
     customBoardLineColor?: () => string;
     customBoardLabelColor?: () => string;
     customBoardUrl?: () => string;
+    /** Returns custom black stone image URLs, trimmed and unique within the array. */
     customBlackStoneUrls?: () => string[];
+    /** Returns custom white stone image URLs, trimmed and unique within the array. */
     customWhiteStoneUrls?: () => string[];
     /** @deprecated Use customBlackStoneUrls instead. */
     customBlackStoneUrl?: () => string;

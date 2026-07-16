@@ -72,12 +72,8 @@ function customStoneRandomValuesFor(goban: GobanBase): CustomStoneRandomValues {
     return custom_stone_random_values.get(engine) ?? initializeCustomStoneRandomValues(engine);
 }
 
-function normalizeCustomStoneUrls(urls: string[]): string[] {
-    return Array.from(new Set(urls.map((url) => url.trim()).filter((url) => url.length > 0)));
-}
-
 function getCustomStoneUrls(callback: (() => string[]) | undefined): string[] {
-    return normalizeCustomStoneUrls(callback?.() ?? []);
+    return callback?.() ?? [];
 }
 
 function square_size(radius: number, scaled: boolean): number {

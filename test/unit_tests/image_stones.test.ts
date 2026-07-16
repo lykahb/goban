@@ -35,8 +35,8 @@ describe("custom image stones", () => {
         jest.restoreAllMocks();
     });
 
-    test("creates one SVG definition per normalized URL", () => {
-        callbacks.customBlackStoneUrls = () => [" first.png ", "", "second.png", "first.png"];
+    test("creates one SVG definition per custom URL", () => {
+        callbacks.customBlackStoneUrls = () => ["first.png", "second.png"];
         const theme = new THEMES.black.Custom();
         const defs = makeDefs();
 
@@ -50,8 +50,20 @@ describe("custom image stones", () => {
         ).toEqual(["first.png", "second.png"]);
     });
 
+    test("uses the solid SVG fallback for an empty custom URL list", () => {
+        callbacks.customBlackStoneUrls = () => [];
+        const theme = new THEMES.black.Custom();
+        const defs = makeDefs();
+
+        const stones = theme.preRenderBlackSVG(defs, 10, 1, () => undefined);
+
+        expect(stones).toHaveLength(1);
+        expect(defs.querySelector("image")).toBeNull();
+        expect(defs.querySelector("circle")?.getAttribute("fill")).toBe("#000000");
+    });
+
     test("adapts the legacy singular callback", () => {
-        setGobanCallbacks({ customWhiteStoneUrl: () => "white.png" });
+        setGobanCallbacks({ customWhiteStoneUrl: () => " white.png " });
         const theme = new THEMES.white.Custom();
         const defs = makeDefs();
 
