@@ -94,8 +94,12 @@ describe("custom image stones", () => {
         jest.spyOn(Math, "random").mockImplementation(() => random_value);
         const theme = new THEMES.black.Custom();
         const stones = ["one", "two", "three", "four"];
-        const first_goban = { engine: { width: 19, height: 19 } } as unknown as GobanBase;
-        const second_goban = { engine: { width: 19, height: 19 } } as unknown as GobanBase;
+        const first_goban = {
+            engine: { width: 19, height: 19 },
+        } as unknown as GobanBase;
+        const second_goban = {
+            engine: { width: 19, height: 19 },
+        } as unknown as GobanBase;
 
         const first_layout = Array.from({ length: 19 }, (_, x) =>
             Array.from({ length: 19 }, (_, y) => theme.getStone(x, y, stones, first_goban)),
@@ -114,19 +118,43 @@ describe("custom image stones", () => {
         expect(theme.getStone(4, 7, stones, second_goban)).toBe("four");
     });
 
-    test("reinitializes the random arrangement when a goban changes board size", () => {
-        jest.spyOn(Math, "random").mockReturnValue(0.1);
+    test("keeps the random arrangement when a goban replaces its engine", () => {
+        let random_value = 0.1;
+        jest.spyOn(Math, "random").mockImplementation(() => random_value);
         const theme = new THEMES.black.Custom();
         const stones = ["one", "two"];
-        const goban = { engine: { width: 2, height: 2 } } as unknown as GobanBase;
+        const goban_state = {
+            engine: { width: 2, height: 2 },
+        };
+        const goban = goban_state as unknown as GobanBase;
+
+        expect(theme.getStone(1, 1, stones, goban)).toBe("one");
+        expect(theme.getStoneHash(1, 1, stones, goban)).toBe("0");
+
+        random_value = 0.8;
+        goban_state.engine = { width: 2, height: 2 };
+
+        expect(theme.getStone(1, 1, stones, goban)).toBe("one");
+        expect(theme.getStoneHash(1, 1, stones, goban)).toBe("0");
+    });
+
+    test("reinitializes the random arrangement when a goban changes board size", () => {
+        let random_value = 0.1;
+        jest.spyOn(Math, "random").mockImplementation(() => random_value);
+        const theme = new THEMES.black.Custom();
+        const stones = ["one", "two"];
+        const goban_state = {
+            engine: { width: 2, height: 2 },
+        };
+        const goban = goban_state as unknown as GobanBase;
 
         expect(theme.getStone(1, 1, stones, goban)).toBe("one");
 
-        (goban as unknown as { engine: { width: number; height: number } }).engine = {
-            width: 3,
-            height: 3,
-        };
+        random_value = 0.8;
+        goban_state.engine = { width: 3, height: 3 };
 
-        expect(theme.getStone(2, 2, stones, goban)).toBe("one");
+        expect(theme.getStone(2, 2, stones, goban)).toBe("two");
+        expect(theme.getStone(1, 1, stones, goban)).toBe("two");
+        expect(theme.getStoneHash(1, 1, stones, goban)).toBe("1");
     });
 });

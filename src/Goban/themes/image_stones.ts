@@ -50,26 +50,36 @@ type StoneType = {
 type StoneTypeArray = Array<StoneType>;
 
 type CustomStoneRandomValues = number[][];
-type CustomStoneRandomValuesKey = GobanBase["engine"];
 
-const custom_stone_random_values = new WeakMap<
-    CustomStoneRandomValuesKey,
-    CustomStoneRandomValues
->();
+/* Custom stone layouts are scoped to the durable renderer, not its engine: a
+ * reconnect can replace goban.engine while preserving the GobanBase instance.
+ * The renderer can also load a different logical board size, so the matrix
+ * dimensions are checked before reusing its random values. */
+const custom_stone_random_values = new WeakMap<GobanBase, CustomStoneRandomValues>();
 
-function initializeCustomStoneRandomValues(
-    engine: CustomStoneRandomValuesKey,
-): CustomStoneRandomValues {
-    const values = Array.from({ length: engine.height }, () =>
-        Array.from({ length: engine.width }, () => Math.random()),
+function initializeCustomStoneRandomValues(goban: GobanBase): CustomStoneRandomValues {
+    const random_values = Array.from({ length: goban.engine.height }, () =>
+        Array.from({ length: goban.engine.width }, () => Math.random()),
     );
-    custom_stone_random_values.set(engine, values);
-    return values;
+    custom_stone_random_values.set(goban, random_values);
+    return random_values;
 }
 
-function customStoneRandomValuesFor(goban: GobanBase): CustomStoneRandomValues {
-    const engine = goban.engine;
-    return custom_stone_random_values.get(engine) ?? initializeCustomStoneRandomValues(engine);
+function customStoneRandomValuesFor(goban: GobanBase): number[][] {
+    const random_values = custom_stone_random_values.get(goban);
+    if (
+        !random_values ||
+        random_values.length !== goban.engine.height ||
+        random_values[0]?.length !== goban.engine.width
+    ) {
+        return initializeCustomStoneRandomValues(goban);
+    }
+    return random_values;
+}
+
+function getCustomStoneIndex(x: number, y: number, stones: unknown[], goban: GobanBase): number {
+    const random_value = customStoneRandomValuesFor(goban)[y][x];
+    return Math.floor(random_value * stones.length);
 }
 
 function getCustomStoneUrls(callback: (() => string[]) | undefined): string[] {
@@ -348,8 +358,14 @@ export default function (THEMES: ThemesInterface) {
             if (!Array.isArray(stones) || stones.length <= 1) {
                 return super.getStone(x, y, stones, goban);
             }
-            const random_value = customStoneRandomValuesFor(goban)[y][x];
-            return stones[Math.floor(random_value * stones.length)];
+            return stones[getCustomStoneIndex(x, y, stones, goban)];
+        }
+
+        override getStoneHash(x: number, y: number, stones: unknown, goban: GobanBase): string {
+            if (!Array.isArray(stones) || stones.length <= 1) {
+                return super.getStoneHash(x, y, stones, goban);
+            }
+            return `${getCustomStoneIndex(x, y, stones, goban)}`;
         }
 
         override placeBlackStone(
