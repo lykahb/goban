@@ -364,7 +364,10 @@ export default function (THEMES: ThemesInterface) {
             cy: number,
             radius: number,
         ): void {
-            if (imageStoneIsReady(stone)) {
+            if (
+                getCustomStoneUrls(callbacks.customBlackStoneUrls).length > 0 &&
+                imageStoneIsReady(stone)
+            ) {
                 placeRenderedImageStone(ctx, shadow_ctx, stone, cx, cy, radius);
             } else {
                 renderPlainStone(
@@ -382,7 +385,7 @@ export default function (THEMES: ThemesInterface) {
             radius: number,
             _seed: number,
             deferredRenderCallback: () => void,
-        ): StoneTypeArray | boolean {
+        ): StoneTypeArray | true {
             const [url] = getCustomStoneUrls(callbacks.customBlackStoneUrls);
             if (!url) {
                 return true;
@@ -412,7 +415,10 @@ export default function (THEMES: ThemesInterface) {
             cy: number,
             radius: number,
         ): void {
-            if (imageStoneIsReady(stone)) {
+            if (
+                getCustomStoneUrls(callbacks.customWhiteStoneUrls).length > 0 &&
+                imageStoneIsReady(stone)
+            ) {
                 placeRenderedImageStone(ctx, shadow_ctx, stone, cx, cy, radius);
             } else {
                 renderPlainStone(
@@ -430,7 +436,7 @@ export default function (THEMES: ThemesInterface) {
             radius: number,
             _seed: number,
             deferredRenderCallback: () => void,
-        ): StoneTypeArray | boolean {
+        ): StoneTypeArray | true {
             const [url] = getCustomStoneUrls(callbacks.customWhiteStoneUrls);
             if (!url) {
                 return true;

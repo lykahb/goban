@@ -76,6 +76,20 @@ describe("custom image stones", () => {
         expect(defs.querySelector("circle")?.getAttribute("fill")).toBe("#123456");
     });
 
+    test("falls back when no custom URL and the cached stone is missing", () => {
+        callbacks.customBlackStoneUrls = () => [];
+        const theme = new THEMES.black.Custom();
+        const ctx = {
+            beginPath: jest.fn(),
+            arc: jest.fn(),
+            stroke: jest.fn(),
+            fill: jest.fn(),
+        } as unknown as CanvasRenderingContext2D;
+
+        expect(() => theme.placeBlackStone(ctx, null, undefined as never, 10, 10, 5)).not.toThrow();
+        expect(ctx.fill).toHaveBeenCalledTimes(1);
+    });
+
     test("keeps a random arrangement stable within each goban", () => {
         let random_value = 0.1;
         jest.spyOn(Math, "random").mockImplementation(() => random_value);
