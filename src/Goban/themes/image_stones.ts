@@ -23,7 +23,6 @@ import { renderShadow } from "./rendered_stones";
 import { renderPlainStone } from "./plain_stones";
 import { callbacks } from "../callbacks";
 import { raw_anime_black_svg, raw_anime_white_svg } from "./raw_image_stone_data";
-import type { GobanBase } from "../../GobanBase";
 
 const anime_black_imagedata = makeSvgImageData(raw_anime_black_svg);
 const anime_white_imagedata = makeSvgImageData(raw_anime_white_svg);
@@ -48,39 +47,6 @@ type StoneType = {
     image_loaded: boolean;
 };
 type StoneTypeArray = Array<StoneType>;
-
-type CustomStoneRandomValues = number[][];
-
-/* Custom stone layouts are scoped to the durable renderer, not its engine: a
- * reconnect can replace goban.engine while preserving the GobanBase instance.
- * The renderer can also load a different logical board size, so the matrix
- * dimensions are checked before reusing its random values. */
-const custom_stone_random_values = new WeakMap<GobanBase, CustomStoneRandomValues>();
-
-function initializeCustomStoneRandomValues(goban: GobanBase): CustomStoneRandomValues {
-    const random_values = Array.from({ length: goban.engine.height }, () =>
-        Array.from({ length: goban.engine.width }, () => Math.random()),
-    );
-    custom_stone_random_values.set(goban, random_values);
-    return random_values;
-}
-
-function customStoneRandomValuesFor(goban: GobanBase): number[][] {
-    const random_values = custom_stone_random_values.get(goban);
-    if (
-        !random_values ||
-        random_values.length !== goban.engine.height ||
-        random_values[0]?.length !== goban.engine.width
-    ) {
-        return initializeCustomStoneRandomValues(goban);
-    }
-    return random_values;
-}
-
-function getCustomStoneIndex(x: number, y: number, stones: unknown[], goban: GobanBase): number {
-    const random_value = customStoneRandomValuesFor(goban)[y][x];
-    return Math.floor(random_value * stones.length);
-}
 
 function getCustomStoneUrls(callback: (() => string[]) | undefined): string[] {
     return callback?.() ?? [];
@@ -352,20 +318,6 @@ export default function (THEMES: ThemesInterface) {
 
         override get theme_name(): string {
             return "Custom";
-        }
-
-        override getStone(x: number, y: number, stones: unknown, goban: GobanBase): unknown {
-            if (!Array.isArray(stones) || stones.length <= 1) {
-                return super.getStone(x, y, stones, goban);
-            }
-            return stones[getCustomStoneIndex(x, y, stones, goban)];
-        }
-
-        override getStoneHash(x: number, y: number, stones: unknown, goban: GobanBase): string {
-            if (!Array.isArray(stones) || stones.length <= 1) {
-                return super.getStoneHash(x, y, stones, goban);
-            }
-            return `${getCustomStoneIndex(x, y, stones, goban)}`;
         }
 
         override placeBlackStone(
