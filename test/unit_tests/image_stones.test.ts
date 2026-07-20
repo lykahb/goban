@@ -15,7 +15,7 @@
  */
 
 import type { GobanBase } from "../../src/GobanBase";
-import { callbacks, setGobanCallbacks } from "../../src/Goban/callbacks";
+import { callbacks } from "../../src/Goban/callbacks";
 import { THEMES } from "../../src/Goban/themes";
 
 function makeDefs(): SVGDefsElement {
@@ -26,8 +26,6 @@ describe("custom image stones", () => {
     afterEach(() => {
         delete callbacks.customBlackStoneUrls;
         delete callbacks.customWhiteStoneUrls;
-        delete callbacks.customBlackStoneUrl;
-        delete callbacks.customWhiteStoneUrl;
         delete callbacks.customBlackStoneColor;
         delete callbacks.customWhiteStoneColor;
         callbacks.customBlackStoneUrls = () => [];
@@ -60,19 +58,6 @@ describe("custom image stones", () => {
         expect(stones).toHaveLength(1);
         expect(defs.querySelector("image")).toBeNull();
         expect(defs.querySelector("circle")?.getAttribute("fill")).toBe("#000000");
-    });
-
-    test("adapts the legacy singular callback", () => {
-        setGobanCallbacks({ customWhiteStoneUrl: () => " white.png " });
-        const theme = new THEMES.white.Custom();
-        const defs = makeDefs();
-
-        const stones = theme.preRenderWhiteSVG(defs, 10, 1, () => undefined);
-
-        expect(stones).toHaveLength(1);
-        expect(
-            defs.querySelector("image")?.getAttributeNS("http://www.w3.org/1999/xlink", "href"),
-        ).toBe("white.png");
     });
 
     test("falls back when no custom URL and the cached stone is missing", () => {

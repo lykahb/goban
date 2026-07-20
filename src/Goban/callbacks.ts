@@ -51,10 +51,6 @@ export interface GobanCallbacks {
     customBlackStoneUrls?: () => string[];
     /** Returns custom white stone image URLs, trimmed and unique within the array. */
     customWhiteStoneUrls?: () => string[];
-    /** @deprecated Use customBlackStoneUrls instead. */
-    customBlackStoneUrl?: () => string;
-    /** @deprecated Use customWhiteStoneUrls instead. */
-    customWhiteStoneUrl?: () => string;
 
     canvasAllocationErrorHandler?: (
         note: string | null,
@@ -76,20 +72,10 @@ export interface GobanCallbacks {
     toast?: (message_id: string, duration: number) => void;
 }
 
-function legacyBlackStoneUrls(): string[] {
-    const url = callbacks.customBlackStoneUrl?.().trim();
-    return url ? [url] : [];
-}
-
-function legacyWhiteStoneUrls(): string[] {
-    const url = callbacks.customWhiteStoneUrl?.().trim();
-    return url ? [url] : [];
-}
-
 export const callbacks: GobanCallbacks = {
     getClockDrift: () => 0,
-    customBlackStoneUrls: legacyBlackStoneUrls,
-    customWhiteStoneUrls: legacyWhiteStoneUrls,
+    customBlackStoneUrls: () => [],
+    customWhiteStoneUrls: () => [],
 };
 
 /**
@@ -97,14 +83,6 @@ export const callbacks: GobanCallbacks = {
  * or all of the callbacks, only the provided callbacks will be updated.
  */
 export function setGobanCallbacks(newCallbacks: GobanCallbacks): void {
-    // This is a partial update, so only restore a legacy shim when its singular callback is supplied.
-    if (newCallbacks.customBlackStoneUrl && !newCallbacks.customBlackStoneUrls) {
-        callbacks.customBlackStoneUrls = legacyBlackStoneUrls;
-    }
-    if (newCallbacks.customWhiteStoneUrl && !newCallbacks.customWhiteStoneUrls) {
-        callbacks.customWhiteStoneUrls = legacyWhiteStoneUrls;
-    }
-
     for (const key in newCallbacks) {
         if (newCallbacks[key as keyof GobanCallbacks] !== undefined) {
             callbacks[key as keyof GobanCallbacks] = newCallbacks[
